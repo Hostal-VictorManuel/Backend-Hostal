@@ -152,6 +152,8 @@ using (var scope = app.Services.CreateScope())
     var context = scope.ServiceProvider.GetRequiredService<SistemaHostalDbContext>();
     var passwordHasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher>();
 
+    context.Database.Migrate();
+
     if (!context.Usuarios.Any())
     {
         var passwordHash = passwordHasher.Hash("Admin123!");
