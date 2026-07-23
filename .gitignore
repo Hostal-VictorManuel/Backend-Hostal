@@ -8,3 +8,5 @@ obj/
 
 ## Secretos
 appsettings.Development.json
+
+.env

@@ -1,0 +1,46 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: sistemahostal-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - sistemahostal-net
+    # Sin "ports:" a propósito -- Postgres solo debe ser accesible
+    # dentro de la red interna de Docker, nunca expuesto a internet.
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: sistemahostal-api
+    restart: unless-stopped
+    depends_on:
+      - postgres
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__DefaultConnection: "Host=postgres;Port=5432;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}"
+      JwtSettings__SecretKey: ${JWT_SECRET_KEY}
+      JwtSettings__Issuer: SistemaHostal.API
+      JwtSettings__Audience: SistemaHostal.Clients
+      JwtSettings__ExpirationMinutes: 60
+      ApiKeySettings__Key: ${N8N_API_KEY}
+    ports:
+      - "127.0.0.1:8080:8080"
+      # Solo accesible desde el propio servidor (localhost) -- Nginx
+      # es el que expone el puerto 443 hacia internet y hace proxy hacia aquí.
+    networks:
+      - sistemahostal-net
+
+volumes:
+  postgres_data:
+
+networks:
+  sistemahostal-net:
+    driver: bridge
