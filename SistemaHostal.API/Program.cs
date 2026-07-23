@@ -175,6 +175,9 @@ using (var scope = app.Services.CreateScope())
 app.UseSwagger();
 app.UseSwaggerUI();
 
+
+
+app.UseMiddleware<SistemaHostal.API.Middlewares.ExceptionHandlingMiddleware>();
 app.UseCors("Default");
 app.UseAuthentication();
 app.UseAuthorization();
