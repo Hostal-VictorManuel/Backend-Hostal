@@ -39,12 +39,12 @@ public class TurnoQueries(SistemaHostalDbContext context) : ITurnoQueries
             turno.FechaHoraInicio, turno.FechaHoraFin, turno.Estado.ToString(), incidencias);
     }
 
-    public async Task<TurnoDetalleDto?> ObtenerActivoAsync(CancellationToken cancellationToken = default)
+    public async Task<TurnoDetalleDto?> ObtenerActivoAsync(int usuarioId, CancellationToken cancellationToken = default)
     {
         var turno = await context.Set<Turno>()
             .AsNoTracking()
             .Include(t => t.Incidencias)
-            .FirstOrDefaultAsync(t => t.Estado == EstadoTurno.Activo, cancellationToken);
+            .FirstOrDefaultAsync(t => t.Estado == EstadoTurno.Activo && t.UsuarioId == usuarioId, cancellationToken);
 
         if (turno is null) return null;
 

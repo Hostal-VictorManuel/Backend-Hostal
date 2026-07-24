@@ -6,5 +6,6 @@ public interface ITurnoQueries
 
     Task<TurnoDetalleDto?> ObtenerDetalleAsync(int turnoId, CancellationToken cancellationToken = default);
 
-    Task<TurnoDetalleDto?> ObtenerActivoAsync(CancellationToken cancellationToken = default);
+    Task<TurnoDetalleDto?> ObtenerActivoAsync(int usuarioId, CancellationToken cancellationToken = default);
+    
 }

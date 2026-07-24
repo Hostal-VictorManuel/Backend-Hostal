@@ -56,7 +56,8 @@ public class TurnosController(IMediator mediator, ITurnoQueries turnoQueries) : 
     [HttpGet("activo")]
     public async Task<IActionResult> ObtenerActivo(CancellationToken cancellationToken)
     {
-        var turno = await turnoQueries.ObtenerActivoAsync(cancellationToken);
+        var usuarioId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub")!);
+        var turno = await turnoQueries.ObtenerActivoAsync(usuarioId, cancellationToken);
         return turno is null ? NotFound() : Ok(turno);
     }
 }
