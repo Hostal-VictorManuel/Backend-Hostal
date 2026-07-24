@@ -141,11 +141,11 @@ public class ReportesQueries(
             select new { Pago = p, Venta = v, Metodo = m };
 
         if (desde.HasValue)
-            query = query.Where(x => x.Venta.FechaHoraInicio >= desde.Value.Date);
+            query = query.Where(x => x.Venta.FechaHoraInicio >= ComoUtc(desde.Value.Date));
 
         if (hasta.HasValue)
-            query = query.Where(x => x.Venta.FechaHoraInicio < hasta.Value.Date.AddDays(1));
-
+            query = query.Where(x => x.Venta.FechaHoraInicio < ComoUtc(hasta.Value.Date.AddDays(1)));
+        
         return await query
             .GroupBy(x => new { x.Metodo.Id, x.Metodo.Nombre })
             .Select(g => new VentasPorMetodoPagoDto(g.Key.Id, g.Key.Nombre, g.Sum(x => x.Pago.Monto)))
@@ -191,11 +191,11 @@ public class ReportesQueries(
             select new { Turno = t, Usuario = u };
 
         if (desde.HasValue)
-            queryTurnos = queryTurnos.Where(x => x.Turno.FechaHoraInicio >= desde.Value.Date);
+            queryTurnos = queryTurnos.Where(x => x.Turno.FechaHoraInicio >= ComoUtc(desde.Value.Date));
 
         if (hasta.HasValue)
-            queryTurnos = queryTurnos.Where(x => x.Turno.FechaHoraInicio < hasta.Value.Date.AddDays(1));
-
+            queryTurnos = queryTurnos.Where(x => x.Turno.FechaHoraInicio < ComoUtc(hasta.Value.Date.AddDays(1)));
+        
         var turnos = await queryTurnos.ToListAsync(cancellationToken);
 
         var totalesPorTurno = await context.Set<Venta>().AsNoTracking()
@@ -223,11 +223,11 @@ public class ReportesQueries(
             select new { Venta = v, Usuario = u };
 
         if (desde.HasValue)
-            query = query.Where(x => x.Venta.FechaHoraInicio >= desde.Value.Date);
+            query = query.Where(x => x.Venta.FechaHoraInicio >= ComoUtc(desde.Value.Date));
 
         if (hasta.HasValue)
-            query = query.Where(x => x.Venta.FechaHoraInicio < hasta.Value.Date.AddDays(1));
-
+            query = query.Where(x => x.Venta.FechaHoraInicio < ComoUtc(hasta.Value.Date.AddDays(1)));
+        
         var ventas = await query
             .Select(x => new { x.Usuario.Id, x.Usuario.NombreCompleto, Total = x.Venta.LineasVenta.Sum(l => l.PrecioUnitario * l.Cantidad) })
             .ToListAsync(cancellationToken);
@@ -245,11 +245,11 @@ public class ReportesQueries(
             .Where(v => EstadosVentaValida.Contains(v.Estado) && v.PagosVenta.Count > 1);
 
         if (desde.HasValue)
-            query = query.Where(v => v.FechaHoraInicio >= desde.Value.Date);
+            query = query.Where(v => v.FechaHoraInicio >= ComoUtc(desde.Value.Date));
 
         if (hasta.HasValue)
-            query = query.Where(v => v.FechaHoraInicio < hasta.Value.Date.AddDays(1));
-
+            query = query.Where(v => v.FechaHoraInicio < ComoUtc(hasta.Value.Date.AddDays(1)));
+        
         return await query
             .Select(v => new VentaPagoMixtoDto(v.Id, v.NumeroVenta, v.PagosVenta.Count, v.LineasVenta.Sum(l => l.PrecioUnitario * l.Cantidad)))
             .ToListAsync(cancellationToken);
