@@ -78,7 +78,6 @@ public class VentasController(IMediator mediator, IVentaQueries ventaQueries) : 
     }
 
     [HttpGet("habitaciones-pendientes")]
-    [Authorize(Roles = "Administrador")]
     public async Task<IActionResult> ObtenerHabitacionesConConsumosPendientes(CancellationToken cancellationToken)
     {
         var habitaciones = await ventaQueries.ObtenerHabitacionesConConsumosPendientesAsync(cancellationToken);
@@ -93,7 +92,6 @@ public class VentasController(IMediator mediator, IVentaQueries ventaQueries) : 
     }
 
     [HttpGet]
-    [Authorize(Roles = "Administrador")]
     public async Task<IActionResult> Buscar(
         [FromQuery] DateTime? fecha, [FromQuery] string? numeroVenta, [FromQuery] int? turnoId, CancellationToken cancellationToken)
     {
