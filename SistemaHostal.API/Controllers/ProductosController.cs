@@ -55,7 +55,6 @@ public class ProductosController(IMediator mediator, IProductoQueries productoQu
     }
 
     [HttpPatch("{id:int}/ingreso-stock")]
-    [Authorize(Roles = "Administrador")]
     public async Task<IActionResult> RegistrarIngresoStock(int id, IngresoStockResource resource, CancellationToken cancellationToken)
     {
         var usuarioId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub")!);
