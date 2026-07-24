@@ -13,8 +13,11 @@ public class VentaQueries(SistemaHostalDbContext context) : IVentaQueries
         var query = context.Set<Venta>().AsNoTracking().AsQueryable();
 
         if (fecha.HasValue)
-            query = query.Where(v => v.FechaHoraInicio.Date == fecha.Value.Date);
-
+        {
+            var fechaUtc = DateTime.SpecifyKind(fecha.Value.Date, DateTimeKind.Utc);
+            query = query.Where(v => v.FechaHoraInicio.Date == fechaUtc);
+        }
+        
         if (!string.IsNullOrWhiteSpace(numeroVenta))
             query = query.Where(v => v.NumeroVenta.Contains(numeroVenta));
 
