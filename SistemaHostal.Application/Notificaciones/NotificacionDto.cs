@@ -1,3 +1,3 @@
 ﻿namespace SistemaHostal.Application.Notificaciones;
 
-public record NotificacionDto(int Id, string Canal, string Contenido, string Estado, DateTime FechaRecepcion);
+public record NotificacionDto(int Id, string Canal, string Contenido, string Estado, string? RolDestino, DateTime FechaRecepcion);

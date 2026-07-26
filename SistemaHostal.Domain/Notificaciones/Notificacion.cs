@@ -1,4 +1,5 @@
 ﻿using SistemaHostal.Domain.Common;
+using SistemaHostal.Domain.Identidad;
 
 namespace SistemaHostal.Domain.Notificaciones;
 
@@ -10,7 +11,7 @@ public class Notificacion : AggregateRoot
         Contenido = string.Empty;
     }
 
-    public Notificacion(string canal, string contenido) : this()
+    public Notificacion(string canal, string contenido, RolUsuario? rolDestino) : this()
     {
         if (string.IsNullOrWhiteSpace(canal))
             throw new ArgumentException("El canal es obligatorio.", nameof(canal));
@@ -19,12 +20,14 @@ public class Notificacion : AggregateRoot
 
         Canal = canal;
         Contenido = contenido;
+        RolDestino = rolDestino;
         Estado = EstadoNotificacion.NoLeida;
         FechaRecepcion = DateTime.UtcNow;
     }
 
     public string Canal { get; private set; }
     public string Contenido { get; private set; }
+    public RolUsuario? RolDestino { get; private set; }
     public EstadoNotificacion Estado { get; private set; }
     public DateTime FechaRecepcion { get; private set; }
 

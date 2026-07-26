@@ -10,11 +10,10 @@ public class RegistrarNotificacionReservaCommandHandler(
 {
     public async Task<Result<NotificacionDto>> Handle(RegistrarNotificacionReservaCommand request, CancellationToken cancellationToken)
     {
-        var notificacion = new Notificacion(request.Canal, request.Contenido);
+        var notificacion = new Notificacion(request.Canal, request.Contenido, request.RolDestino);
         await notificacionRepository.AddAsync(notificacion, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
-        var dto = new NotificacionDto(notificacion.Id, notificacion.Canal, notificacion.Contenido, notificacion.Estado.ToString(), notificacion.FechaRecepcion);
-        return Result<NotificacionDto>.Success(dto);
+        var dto = new NotificacionDto(notificacion.Id, notificacion.Canal, notificacion.Contenido, notificacion.Estado.ToString(), notificacion.RolDestino?.ToString(), notificacion.FechaRecepcion);        return Result<NotificacionDto>.Success(dto);
     }
 }

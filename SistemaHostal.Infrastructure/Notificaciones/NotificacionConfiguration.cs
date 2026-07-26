@@ -14,6 +14,7 @@ public class NotificacionConfiguration : IEntityTypeConfiguration<Notificacion>
         builder.Property(n => n.Canal).HasMaxLength(50).IsRequired();
         builder.Property(n => n.Contenido).IsRequired();
         builder.Property(n => n.Estado).HasConversion<string>().HasMaxLength(20);
+        builder.Property(n => n.RolDestino).HasConversion<string>().HasMaxLength(20);
 
         builder.Ignore(n => n.DomainEvents);
     }

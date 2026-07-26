@@ -1,7 +1,9 @@
-﻿using MediatR;
+﻿using System.Security.Claims;
+using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SistemaHostal.Application.Notificaciones;
+using SistemaHostal.Domain.Identidad;
 using SistemaHostal.Domain.Notificaciones;
 
 namespace SistemaHostal.API.Controllers;
@@ -14,7 +16,8 @@ public class NotificacionesController(IMediator mediator, INotificacionQueries n
     [HttpGet]
     public async Task<IActionResult> Listar([FromQuery] EstadoNotificacion? estado, CancellationToken cancellationToken)
     {
-        var notificaciones = await notificacionQueries.ListarAsync(estado, cancellationToken);
+        var rolUsuario = Enum.Parse<RolUsuario>(User.FindFirstValue(ClaimTypes.Role)!);
+        var notificaciones = await notificacionQueries.ListarAsync(estado, rolUsuario, cancellationToken);
         return Ok(notificaciones);
     }
 
