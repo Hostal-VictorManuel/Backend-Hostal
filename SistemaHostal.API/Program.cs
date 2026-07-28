@@ -143,11 +143,10 @@ builder.Services.AddSwaggerGen(options =>
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("Default", policy =>
-        policy.WithOrigins("http://localhost:5173")
+        policy.WithOrigins("http://localhost:5173", "https://frontend-sistemahostal-tau.vercel.app")
             .AllowAnyMethod()
             .AllowAnyHeader());
 });
-
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
