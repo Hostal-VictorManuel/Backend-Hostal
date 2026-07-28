@@ -96,4 +96,21 @@ public class VentaQueries(SistemaHostalDbContext context) : IVentaQueries
 
         return await query.ToListAsync(cancellationToken);
     }
+    public async Task<IReadOnlyList<VentaDetalleDto>> ObtenerConsumosPorTrabajadorAsync(int trabajadorId, CancellationToken cancellationToken = default)
+    {
+        var ventas = await context.Set<Venta>()
+            .AsNoTracking()
+            .Include(v => v.LineasVenta)
+            .Include(v => v.PagosVenta)
+            .Where(v => v.TrabajadorId == trabajadorId && v.Estado == EstadoVenta.Pendiente)
+            .OrderBy(v => v.FechaHoraInicio)
+            .ToListAsync(cancellationToken);
+
+        return ventas.Select(venta => new VentaDetalleDto(
+            venta.Id, venta.NumeroVenta, venta.TurnoId, venta.NumeroHabitacion, venta.TrabajadorId, venta.Observaciones,
+            venta.Total, venta.VueltoEfectivo, venta.Estado.ToString(), venta.FechaHoraInicio, venta.FechaHoraFinalizacion,
+            venta.LineasVenta.Select(l => new LineaVentaDto(l.Id, l.ProductoId, l.NombreProducto, l.PrecioUnitario, l.Cantidad, l.Subtotal)).ToList(),
+            venta.PagosVenta.Select(p => new PagoVentaDto(p.Id, p.MetodoDePagoId, p.Monto, p.ReferenciaPago)).ToList()
+        )).ToList();
+    }
 }

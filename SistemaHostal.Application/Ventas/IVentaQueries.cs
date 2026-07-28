@@ -11,5 +11,7 @@ public interface IVentaQueries
 
     Task<IReadOnlyList<TrabajadorConDeudaDto>> ObtenerTrabajadoresConDeudaAsync(CancellationToken cancellationToken = default);
     
+    Task<IReadOnlyList<VentaDetalleDto>> ObtenerConsumosPorTrabajadorAsync(int trabajadorId, CancellationToken cancellationToken = default);
+    
     Task<IReadOnlyList<VentaDetalleDto>> ObtenerConsumosPorHabitacionAsync(string numeroHabitacion, CancellationToken cancellationToken = default);
 }

@@ -121,4 +121,10 @@ public class VentasController(IMediator mediator, IVentaQueries ventaQueries) : 
         var result = await mediator.Send(new CerrarMesTrabajadoresCommand(resource.MetodoDePagoId), cancellationToken);
         return result.IsSuccess ? Ok(new { ventasCerradas = result.Value }) : Conflict(new { message = result.Message });
     }
+    [HttpGet("trabajadores/{trabajadorId:int}/consumos")]
+    public async Task<IActionResult> ObtenerConsumosPorTrabajador(int trabajadorId, CancellationToken cancellationToken)
+    {
+        var consumos = await ventaQueries.ObtenerConsumosPorTrabajadorAsync(trabajadorId, cancellationToken);
+        return Ok(consumos);
+    }
 }
