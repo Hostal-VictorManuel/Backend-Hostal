@@ -5,6 +5,7 @@ public record VentaDetalleDto(
     string NumeroVenta,
     int TurnoId,
     string? NumeroHabitacion,
+    int? TrabajadorId,
     string? Observaciones,
     decimal Total,
     decimal? VueltoEfectivo,

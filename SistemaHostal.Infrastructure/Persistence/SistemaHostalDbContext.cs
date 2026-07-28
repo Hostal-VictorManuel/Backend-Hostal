@@ -8,6 +8,7 @@ using SistemaHostal.Domain.Ventas;
 using SistemaHostal.Domain.Inventario;
 using SistemaHostal.Domain.Auditoria;
 using SistemaHostal.Domain.Notificaciones;
+using SistemaHostal.Domain.Trabajadores;
 
 namespace SistemaHostal.Infrastructure.Persistence;
 
@@ -23,6 +24,7 @@ public class SistemaHostalDbContext(DbContextOptions<SistemaHostalDbContext> opt
     public DbSet<MovimientoInventario> MovimientosInventario => Set<MovimientoInventario>();
     public DbSet<RegistroBitacora> RegistrosBitacora => Set<RegistroBitacora>();
     public DbSet<Notificacion> Notificaciones => Set<Notificacion>();
+    public DbSet<Trabajador> Trabajadores => Set<Trabajador>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

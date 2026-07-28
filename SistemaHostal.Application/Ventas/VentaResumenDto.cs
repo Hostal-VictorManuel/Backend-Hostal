@@ -5,6 +5,7 @@ public record VentaResumenDto(
     string NumeroVenta,
     int TurnoId,
     string? NumeroHabitacion,
+    int? TrabajadorId,
     decimal Total,
     string Estado,
     DateTime FechaHoraInicio,

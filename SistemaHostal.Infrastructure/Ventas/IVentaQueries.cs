@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using SistemaHostal.Application.Ventas;
+using SistemaHostal.Domain.Trabajadores;
 using SistemaHostal.Domain.Ventas;
 using SistemaHostal.Infrastructure.Persistence;
 
@@ -17,7 +18,7 @@ public class VentaQueries(SistemaHostalDbContext context) : IVentaQueries
             var fechaUtc = DateTime.SpecifyKind(fecha.Value.Date, DateTimeKind.Utc);
             query = query.Where(v => v.FechaHoraInicio.Date == fechaUtc);
         }
-        
+
         if (!string.IsNullOrWhiteSpace(numeroVenta))
             query = query.Where(v => v.NumeroVenta.Contains(numeroVenta));
 
@@ -27,7 +28,7 @@ public class VentaQueries(SistemaHostalDbContext context) : IVentaQueries
         return await query
             .OrderByDescending(v => v.FechaHoraInicio)
             .Select(v => new VentaResumenDto(
-                v.Id, v.NumeroVenta, v.TurnoId, v.NumeroHabitacion,
+                v.Id, v.NumeroVenta, v.TurnoId, v.NumeroHabitacion, v.TrabajadorId,
                 v.LineasVenta.Sum(l => l.PrecioUnitario * l.Cantidad), v.Estado.ToString(), v.FechaHoraInicio, v.FechaHoraFinalizacion))
             .ToListAsync(cancellationToken);
     }
@@ -43,7 +44,7 @@ public class VentaQueries(SistemaHostalDbContext context) : IVentaQueries
         if (venta is null) return null;
 
         return new VentaDetalleDto(
-            venta.Id, venta.NumeroVenta, venta.TurnoId, venta.NumeroHabitacion, venta.Observaciones,
+            venta.Id, venta.NumeroVenta, venta.TurnoId, venta.NumeroHabitacion, venta.TrabajadorId, venta.Observaciones,
             venta.Total, venta.VueltoEfectivo, venta.Estado.ToString(), venta.FechaHoraInicio, venta.FechaHoraFinalizacion,
             venta.LineasVenta.Select(l => new LineaVentaDto(l.Id, l.ProductoId, l.NombreProducto, l.PrecioUnitario, l.Cantidad, l.Subtotal)).ToList(),
             venta.PagosVenta.Select(p => new PagoVentaDto(p.Id, p.MetodoDePagoId, p.Monto, p.ReferenciaPago)).ToList());
@@ -74,10 +75,25 @@ public class VentaQueries(SistemaHostalDbContext context) : IVentaQueries
             .ToListAsync(cancellationToken);
 
         return ventas.Select(venta => new VentaDetalleDto(
-            venta.Id, venta.NumeroVenta, venta.TurnoId, venta.NumeroHabitacion, venta.Observaciones,
+            venta.Id, venta.NumeroVenta, venta.TurnoId, venta.NumeroHabitacion, venta.TrabajadorId, venta.Observaciones,
             venta.Total, venta.VueltoEfectivo, venta.Estado.ToString(), venta.FechaHoraInicio, venta.FechaHoraFinalizacion,
             venta.LineasVenta.Select(l => new LineaVentaDto(l.Id, l.ProductoId, l.NombreProducto, l.PrecioUnitario, l.Cantidad, l.Subtotal)).ToList(),
             venta.PagosVenta.Select(p => new PagoVentaDto(p.Id, p.MetodoDePagoId, p.Monto, p.ReferenciaPago)).ToList()
         )).ToList();
+    }
+    public async Task<IReadOnlyList<TrabajadorConDeudaDto>> ObtenerTrabajadoresConDeudaAsync(CancellationToken cancellationToken = default)
+    {
+        var query =
+            from v in context.Set<Venta>().AsNoTracking()
+            join t in context.Set<Trabajador>().AsNoTracking() on v.TrabajadorId equals t.Id
+            where v.Estado == EstadoVenta.Pendiente && v.TrabajadorId != null
+            group v by new { t.Id, t.Nombre } into g
+            select new TrabajadorConDeudaDto(
+                g.Key.Id,
+                g.Key.Nombre,
+                g.Count(),
+                g.Sum(v => v.LineasVenta.Sum(l => l.PrecioUnitario * l.Cantidad)));
+
+        return await query.ToListAsync(cancellationToken);
     }
 }

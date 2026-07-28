@@ -15,7 +15,7 @@ public class VentasController(IMediator mediator, IVentaQueries ventaQueries) : 
     [HttpPost]
     public async Task<IActionResult> Iniciar(IniciarVentaResource resource, CancellationToken cancellationToken)
     {
-        var command = new IniciarVentaCommand(resource.TurnoId, resource.NumeroHabitacion);
+        var command = new IniciarVentaCommand(resource.TurnoId, resource.NumeroHabitacion, resource.TrabajadorId);
         var result = await mediator.Send(command, cancellationToken);
         return result.IsSuccess
             ? CreatedAtAction(nameof(ObtenerDetalle), new { id = result.Value!.Id }, result.Value)
@@ -64,7 +64,7 @@ public class VentasController(IMediator mediator, IVentaQueries ventaQueries) : 
     {
         var usuarioId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub")!);
         var pagos = resource.Pagos.Select(p => new PagoInput(p.MetodoDePagoId, p.Monto, p.ReferenciaPago)).ToList();
-        var command = new FinalizarVentaCommand(id, pagos, resource.CargarAHabitacion, usuarioId);
+        var command = new FinalizarVentaCommand(id, pagos, resource.CargarAHabitacion, resource.CargarATrabajador, usuarioId);
         var result = await mediator.Send(command, cancellationToken);
         return result.IsSuccess ? Ok(result.Value) : Conflict(new { message = result.Message });
     }
@@ -104,5 +104,21 @@ public class VentasController(IMediator mediator, IVentaQueries ventaQueries) : 
     {
         var venta = await ventaQueries.ObtenerDetalleAsync(id, cancellationToken);
         return venta is null ? NotFound() : Ok(venta);
+    }
+    
+    [HttpGet("trabajadores-con-deuda")]
+    [Authorize(Roles = "Administrador")]
+    public async Task<IActionResult> ObtenerTrabajadoresConDeuda(CancellationToken cancellationToken)
+    {
+        var trabajadores = await ventaQueries.ObtenerTrabajadoresConDeudaAsync(cancellationToken);
+        return Ok(trabajadores);
+    }
+
+    [HttpPost("trabajadores/cerrar-mes")]
+    [Authorize(Roles = "Administrador")]
+    public async Task<IActionResult> CerrarMesTrabajadores(CerrarMesTrabajadoresResource resource, CancellationToken cancellationToken)
+    {
+        var result = await mediator.Send(new CerrarMesTrabajadoresCommand(resource.MetodoDePagoId), cancellationToken);
+        return result.IsSuccess ? Ok(new { ventasCerradas = result.Value }) : Conflict(new { message = result.Message });
     }
 }

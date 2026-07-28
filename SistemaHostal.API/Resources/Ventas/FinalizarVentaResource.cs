@@ -2,4 +2,4 @@
 
 public record PagoResource(int MetodoDePagoId, decimal Monto, string? ReferenciaPago);
 
-public record FinalizarVentaResource(List<PagoResource> Pagos, bool CargarAHabitacion);
+public record FinalizarVentaResource(List<PagoResource> Pagos, bool CargarAHabitacion, bool CargarATrabajador);

@@ -28,6 +28,8 @@ using SistemaHostal.Infrastructure.Auditoria;
 using SistemaHostal.Application.Reportes;
 using SistemaHostal.Infrastructure.Notificaciones;
 using SistemaHostal.Infrastructure.Reportes;
+using SistemaHostal.Application.Trabajadores;
+using SistemaHostal.Infrastructure.Trabajadores;
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -71,7 +73,8 @@ builder.Services.AddScoped<IReportesQueries, ReportesQueries>();
 builder.Services.AddScoped<INotificacionRepository, NotificacionRepository>();
 builder.Services.AddScoped<INotificacionQueries, NotificacionQueries>();
 builder.Services.Configure<SistemaHostal.API.Seguridad.ApiKeySettings>(builder.Configuration.GetSection("ApiKeySettings"));
-
+builder.Services.AddScoped<ITrabajadorRepository, TrabajadorRepository>();
+builder.Services.AddScoped<ITrabajadorQueries, TrabajadorQueries>();
 
 builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
 

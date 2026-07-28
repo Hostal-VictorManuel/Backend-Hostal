@@ -27,6 +27,8 @@ public class Venta : AggregateRoot
     public string NumeroVenta { get; private set; }
     public int TurnoId { get; private set; }
     public string? NumeroHabitacion { get; private set; }
+    
+    public int? TrabajadorId { get; private set; }
     public string? Observaciones { get; private set; }
     public EstadoVenta Estado { get; private set; }
     public decimal Total => _lineasVenta.Sum(l => l.Subtotal);
@@ -35,6 +37,7 @@ public class Venta : AggregateRoot
     public DateTime? FechaHoraFinalizacion { get; private set; }
     public IReadOnlyCollection<LineaVenta> LineasVenta => _lineasVenta.AsReadOnly();
     public IReadOnlyCollection<PagoVenta> PagosVenta => _pagosVenta.AsReadOnly();
+    
 
     public void AgregarProducto(int productoId, string nombreProducto, decimal precioUnitario, int cantidad)
     {
@@ -82,14 +85,20 @@ public class Venta : AggregateRoot
         FechaHoraFinalizacion = DateTime.UtcNow;
     }
 
-    public void Finalizar(IReadOnlyList<(int MetodoDePagoId, decimal Monto, string? ReferenciaPago)> pagos, bool cargarAHabitacion, int usuarioId)
+    public void Finalizar(IReadOnlyList<(int MetodoDePagoId, decimal Monto, string? ReferenciaPago)> pagos, bool cargarAHabitacion, bool cargarATrabajador, int usuarioId)
     {
         AsegurarEnProceso();
 
         if (_lineasVenta.Count == 0)
             throw new InvalidOperationException("No se puede finalizar una venta sin productos.");
 
-        if (cargarAHabitacion)
+        if (cargarAHabitacion && cargarATrabajador)
+            throw new InvalidOperationException("No se puede cargar la venta a una habitación y a un trabajador al mismo tiempo.");
+
+        if (cargarATrabajador && TrabajadorId is null)
+            throw new InvalidOperationException("La venta no tiene un trabajador asignado.");
+
+        if (cargarAHabitacion || cargarATrabajador)
         {
             Estado = EstadoVenta.Pendiente;
         }
@@ -139,5 +148,17 @@ public class Venta : AggregateRoot
     {
         if (Estado != EstadoVenta.EnProceso)
             throw new InvalidOperationException("La venta ya no está en proceso.");
+    }
+    public Venta(string numeroVenta, int turnoId, string? numeroHabitacion, int? trabajadorId) : this()
+    {
+        if (string.IsNullOrWhiteSpace(numeroVenta))
+            throw new ArgumentException("El número de venta es obligatorio.", nameof(numeroVenta));
+
+        NumeroVenta = numeroVenta;
+        TurnoId = turnoId;
+        NumeroHabitacion = numeroHabitacion;
+        TrabajadorId = trabajadorId;
+        Estado = EstadoVenta.EnProceso;
+        FechaHoraInicio = DateTime.UtcNow;
     }
 }

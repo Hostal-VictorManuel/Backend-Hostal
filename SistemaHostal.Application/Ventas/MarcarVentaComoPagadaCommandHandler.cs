@@ -8,7 +8,8 @@ public class MarcarVentaComoPagadaCommandHandler(
     IVentaRepository ventaRepository,
     IUnitOfWork unitOfWork) : IRequestHandler<MarcarVentaComoPagadaCommand, Result<VentaDetalleDto>>
 {
-    public async Task<Result<VentaDetalleDto>> Handle(MarcarVentaComoPagadaCommand request, CancellationToken cancellationToken)
+    public async Task<Result<VentaDetalleDto>> Handle(MarcarVentaComoPagadaCommand request,
+        CancellationToken cancellationToken)
     {
         var venta = await ventaRepository.ObtenerConLineasYPagosAsync(request.VentaId, cancellationToken);
         if (venta is null)
@@ -16,7 +17,8 @@ public class MarcarVentaComoPagadaCommandHandler(
 
         var totalPagado = request.Pagos.Sum(p => p.Monto);
         if (totalPagado < venta.Total)
-            return Result<VentaDetalleDto>.Failure(VentasError.MontoDePagoNoCoincideConTotal, "La suma de los pagos no cubre el total de la venta.");
+            return Result<VentaDetalleDto>.Failure(VentasError.MontoDePagoNoCoincideConTotal,
+                "La suma de los pagos no cubre el total de la venta.");
 
         try
         {
@@ -35,8 +37,9 @@ public class MarcarVentaComoPagadaCommandHandler(
     }
 
     private static VentaDetalleDto MapearDetalle(Domain.Ventas.Venta venta) => new(
-        venta.Id, venta.NumeroVenta, venta.TurnoId, venta.NumeroHabitacion, venta.Observaciones,
+        venta.Id, venta.NumeroVenta, venta.TurnoId, venta.NumeroHabitacion, venta.TrabajadorId, venta.Observaciones,
         venta.Total, venta.VueltoEfectivo, venta.Estado.ToString(), venta.FechaHoraInicio, venta.FechaHoraFinalizacion,
         venta.LineasVenta.Select(l => new LineaVentaDto(l.Id, l.ProductoId, l.NombreProducto, l.PrecioUnitario, l.Cantidad, l.Subtotal)).ToList(),
         venta.PagosVenta.Select(p => new PagoVentaDto(p.Id, p.MetodoDePagoId, p.Monto, p.ReferenciaPago)).ToList());
+    
 }

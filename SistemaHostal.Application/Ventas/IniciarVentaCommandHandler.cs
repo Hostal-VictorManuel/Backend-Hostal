@@ -12,15 +12,14 @@ public class IniciarVentaCommandHandler(
     public async Task<Result<VentaResumenDto>> Handle(IniciarVentaCommand request, CancellationToken cancellationToken)
     {
         var numeroVenta = await numeroVentaGenerator.GenerarAsync(cancellationToken);
-        var venta = new Venta(numeroVenta, request.TurnoId, request.NumeroHabitacion);
-
+        var venta = new Venta(numeroVenta, request.TurnoId, request.NumeroHabitacion, request.TrabajadorId);
+        
         await ventaRepository.AddAsync(venta, cancellationToken);
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
-        var dto = new VentaResumenDto(
-            venta.Id, venta.NumeroVenta, venta.TurnoId, venta.NumeroHabitacion,
-            venta.Total, venta.Estado.ToString(), venta.FechaHoraInicio, venta.FechaHoraFinalizacion);
-
+        var dto = new VentaResumenDto(venta.Id, venta.NumeroVenta, venta.TurnoId, venta.NumeroHabitacion, 
+            venta.TrabajadorId, venta.Total, venta.Estado.ToString(), 
+            venta.FechaHoraInicio, venta.FechaHoraFinalizacion);
         return Result<VentaResumenDto>.Success(dto);
     }
 }
