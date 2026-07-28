@@ -30,7 +30,7 @@ public class FinalizarVentaCommandHandler(
                     $"No hay stock suficiente para \"{linea.NombreProducto}\".");
         }
 
-        if (!request.CargarAHabitacion)
+        if (!request.CargarAHabitacion && !request.CargarATrabajador)
         {
             var totalPagado = request.Pagos.Sum(p => p.Monto);
             if (totalPagado < venta.Total)
