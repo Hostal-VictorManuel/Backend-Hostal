@@ -215,26 +215,30 @@ public class ReportesQueries(
     public async Task<IReadOnlyList<VentasPorRecepcionistaDto>> ObtenerVentasPorRecepcionistaAsync(
         DateTime? desde, DateTime? hasta, CancellationToken cancellationToken = default)
     {
-        var query =
-            from v in context.Set<Venta>().AsNoTracking()
-            join t in context.Set<Turno>().AsNoTracking() on v.TurnoId equals t.Id
-            join u in context.Set<Usuario>().AsNoTracking() on t.UsuarioId equals u.Id
-            where EstadosVentaValida.Contains(v.Estado)
-            select new { Venta = v, Usuario = u };
+        var queryVentas = context.Set<Venta>().AsNoTracking()
+            .Where(v => EstadosVentaValida.Contains(v.Estado));
 
         if (desde.HasValue)
-            query = query.Where(x => x.Venta.FechaHoraInicio >= ComoUtc(desde.Value.Date));
+            queryVentas = queryVentas.Where(v => v.FechaHoraInicio >= ComoUtc(desde.Value.Date));
 
         if (hasta.HasValue)
-            query = query.Where(x => x.Venta.FechaHoraInicio < ComoUtc(hasta.Value.Date.AddDays(1)));
-        
-        var ventas = await query
-            .Select(x => new { x.Usuario.Id, x.Usuario.NombreCompleto, Total = x.Venta.LineasVenta.Sum(l => l.PrecioUnitario * l.Cantidad) })
+            queryVentas = queryVentas.Where(v => v.FechaHoraInicio < ComoUtc(hasta.Value.Date.AddDays(1)));
+
+        var ventas = await queryVentas
+            .Select(v => new { v.TurnoId, Total = v.LineasVenta.Sum(l => l.PrecioUnitario * l.Cantidad) })
             .ToListAsync(cancellationToken);
 
+        var turnosConUsuario = await (
+            from t in context.Set<Turno>().AsNoTracking()
+            join u in context.Set<Usuario>().AsNoTracking() on t.UsuarioId equals u.Id
+            select new { TurnoId = t.Id, UsuarioId = u.Id, u.NombreCompleto }
+        ).ToDictionaryAsync(x => x.TurnoId, x => (x.UsuarioId, x.NombreCompleto), cancellationToken);
+
         return ventas
-            .GroupBy(x => new { x.Id, x.NombreCompleto })
-            .Select(g => new VentasPorRecepcionistaDto(g.Key.Id, g.Key.NombreCompleto, g.Count(), g.Sum(x => x.Total)))
+            .Where(v => turnosConUsuario.ContainsKey(v.TurnoId))
+            .Select(v => new { Usuario = turnosConUsuario[v.TurnoId], v.Total })
+            .GroupBy(x => new { x.Usuario.UsuarioId, x.Usuario.NombreCompleto })
+            .Select(g => new VentasPorRecepcionistaDto(g.Key.UsuarioId, g.Key.NombreCompleto, g.Count(), g.Sum(x => x.Total)))
             .ToList();
     }
 
@@ -254,5 +258,7 @@ public class ReportesQueries(
             .Select(v => new VentaPagoMixtoDto(v.Id, v.NumeroVenta, v.PagosVenta.Count, v.LineasVenta.Sum(l => l.PrecioUnitario * l.Cantidad)))
             .ToListAsync(cancellationToken);
     }
+    
+    
     
 }

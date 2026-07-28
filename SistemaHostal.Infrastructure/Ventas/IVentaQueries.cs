@@ -52,16 +52,15 @@ public class VentaQueries(SistemaHostalDbContext context) : IVentaQueries
     
     public async Task<IReadOnlyList<HabitacionConsumoPendienteDto>> ObtenerHabitacionesConConsumosPendientesAsync(CancellationToken cancellationToken = default)
     {
-        var query =
-            from v in context.Set<Venta>().AsNoTracking()
-            where v.Estado == EstadoVenta.Pendiente && v.NumeroHabitacion != null
-            group v by v.NumeroHabitacion into g
-            select new HabitacionConsumoPendienteDto(
-                g.Key!,
-                g.Count(),
-                g.Sum(v => v.LineasVenta.Sum(l => l.PrecioUnitario * l.Cantidad)));
+        var ventas = await context.Set<Venta>().AsNoTracking()
+            .Where(v => v.Estado == EstadoVenta.Pendiente && v.NumeroHabitacion != null)
+            .Select(v => new { v.NumeroHabitacion, Total = v.LineasVenta.Sum(l => l.PrecioUnitario * l.Cantidad) })
+            .ToListAsync(cancellationToken);
 
-        return await query.ToListAsync(cancellationToken);
+        return ventas
+            .GroupBy(v => v.NumeroHabitacion!)
+            .Select(g => new HabitacionConsumoPendienteDto(g.Key, g.Count(), g.Sum(v => v.Total)))
+            .ToList();
     }
 
     public async Task<IReadOnlyList<VentaDetalleDto>> ObtenerConsumosPorHabitacionAsync(string numeroHabitacion, CancellationToken cancellationToken = default)
@@ -83,18 +82,19 @@ public class VentaQueries(SistemaHostalDbContext context) : IVentaQueries
     }
     public async Task<IReadOnlyList<TrabajadorConDeudaDto>> ObtenerTrabajadoresConDeudaAsync(CancellationToken cancellationToken = default)
     {
-        var query =
-            from v in context.Set<Venta>().AsNoTracking()
-            join t in context.Set<Trabajador>().AsNoTracking() on v.TrabajadorId equals t.Id
-            where v.Estado == EstadoVenta.Pendiente && v.TrabajadorId != null
-            group v by new { t.Id, t.Nombre } into g
-            select new TrabajadorConDeudaDto(
-                g.Key.Id,
-                g.Key.Nombre,
-                g.Count(),
-                g.Sum(v => v.LineasVenta.Sum(l => l.PrecioUnitario * l.Cantidad)));
+        var ventas = await context.Set<Venta>().AsNoTracking()
+            .Where(v => v.Estado == EstadoVenta.Pendiente && v.TrabajadorId != null)
+            .Select(v => new { v.TrabajadorId, Total = v.LineasVenta.Sum(l => l.PrecioUnitario * l.Cantidad) })
+            .ToListAsync(cancellationToken);
 
-        return await query.ToListAsync(cancellationToken);
+        var trabajadores = await context.Set<Trabajador>().AsNoTracking()
+            .ToDictionaryAsync(t => t.Id, t => t.Nombre, cancellationToken);
+
+        return ventas
+            .GroupBy(v => v.TrabajadorId!.Value)
+            .Where(g => trabajadores.ContainsKey(g.Key))
+            .Select(g => new TrabajadorConDeudaDto(g.Key, trabajadores[g.Key], g.Count(), g.Sum(v => v.Total)))
+            .ToList();
     }
     public async Task<IReadOnlyList<VentaDetalleDto>> ObtenerConsumosPorTrabajadorAsync(int trabajadorId, CancellationToken cancellationToken = default)
     {
