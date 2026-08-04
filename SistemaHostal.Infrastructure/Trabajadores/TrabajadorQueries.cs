@@ -12,7 +12,7 @@ public class TrabajadorQueries(SistemaHostalDbContext context) : ITrabajadorQuer
         var query = context.Set<Trabajador>().AsNoTracking().AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(texto))
-            query = query.Where(t => t.Nombre.Contains(texto));
+            query = query.Where(t => EF.Functions.ILike(t.Nombre, $"%{texto}%"));
 
         return await query
             .Select(t => new TrabajadorDto(t.Id, t.Nombre, t.Estado.ToString(), t.FechaCreacion, t.FechaModificacion))

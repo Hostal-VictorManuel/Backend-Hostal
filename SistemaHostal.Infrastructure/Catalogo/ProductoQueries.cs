@@ -16,7 +16,9 @@ public class ProductoQueries(SistemaHostalDbContext context) : IProductoQueries
             select new { Producto = p, Categoria = c };
 
         if (!string.IsNullOrWhiteSpace(texto))
-            query = query.Where(x => x.Producto.Nombre.Contains(texto) || x.Producto.CodigoBarras.Contains(texto));
+            query = query.Where(x =>
+                EF.Functions.ILike(x.Producto.Nombre, $"%{texto}%") ||
+                EF.Functions.ILike(x.Producto.CodigoBarras, $"%{texto}%"));
 
         if (categoriaId.HasValue)
             query = query.Where(x => x.Producto.CategoriaId == categoriaId.Value);

@@ -20,7 +20,7 @@ public class VentaQueries(SistemaHostalDbContext context) : IVentaQueries
         }
 
         if (!string.IsNullOrWhiteSpace(numeroVenta))
-            query = query.Where(v => v.NumeroVenta.Contains(numeroVenta));
+            query = query.Where(v => EF.Functions.ILike(v.NumeroVenta, $"%{numeroVenta}%"));
 
         if (turnoId.HasValue)
             query = query.Where(v => v.TurnoId == turnoId.Value);

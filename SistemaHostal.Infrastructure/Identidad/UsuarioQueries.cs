@@ -13,7 +13,7 @@ public class UsuarioQueries(SistemaHostalDbContext context) : IUsuarioQueries
         var query = context.Usuarios.AsNoTracking().AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(texto))
-            query = query.Where(u => u.NombreCompleto.Contains(texto) || u.NombreUsuario.Contains(texto));
+            query = query.Where(u => EF.Functions.ILike(u.NombreCompleto, $"%{texto}%") || EF.Functions.ILike(u.NombreUsuario, $"%{texto}%"));
 
         if (rol.HasValue)
             query = query.Where(u => u.Rol == rol.Value);

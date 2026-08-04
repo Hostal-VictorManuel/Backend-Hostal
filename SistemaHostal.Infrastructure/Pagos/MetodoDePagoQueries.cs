@@ -12,7 +12,7 @@ public class MetodoDePagoQueries(SistemaHostalDbContext context) : IMetodoDePago
         var query = context.Set<MetodoDePago>().AsNoTracking().AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(texto))
-            query = query.Where(m => m.Nombre.Contains(texto));
+            query = query.Where(m => EF.Functions.ILike(m.Nombre, $"%{texto}%"));
 
         return await query
             .Select(m => new MetodoDePagoDto(m.Id, m.Nombre, m.Estado.ToString(), m.FechaCreacion, m.FechaModificacion))

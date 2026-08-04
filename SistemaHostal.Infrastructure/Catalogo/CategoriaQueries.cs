@@ -12,7 +12,7 @@ public class CategoriaQueries(SistemaHostalDbContext context) : ICategoriaQuerie
         var query = context.Set<Categoria>().AsNoTracking().AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(texto))
-            query = query.Where(c => c.Nombre.Contains(texto));
+        query = query.Where(c => EF.Functions.ILike(c.Nombre, $"%{texto}%"));
 
         return await query
             .Select(c => new CategoriaResumenDto(
