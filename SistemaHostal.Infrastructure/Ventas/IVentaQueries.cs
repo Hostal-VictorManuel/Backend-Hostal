@@ -9,7 +9,7 @@ namespace SistemaHostal.Infrastructure.Ventas;
 public class VentaQueries(SistemaHostalDbContext context) : IVentaQueries
 {
     public async Task<IReadOnlyList<VentaResumenDto>> BuscarAsync(
-        DateTime? fecha, string? numeroVenta, int? turnoId, CancellationToken cancellationToken = default)
+        DateTime? fecha, string? numeroVenta, int? turnoId, string? estado, CancellationToken cancellationToken = default)
     {
         var query = context.Set<Venta>().AsNoTracking().AsQueryable();
 
@@ -25,6 +25,9 @@ public class VentaQueries(SistemaHostalDbContext context) : IVentaQueries
         if (turnoId.HasValue)
             query = query.Where(v => v.TurnoId == turnoId.Value);
 
+        if (!string.IsNullOrWhiteSpace(estado) && Enum.TryParse<EstadoVenta>(estado, out var estadoEnum))
+            query = query.Where(v => v.Estado == estadoEnum);
+
         return await query
             .OrderByDescending(v => v.FechaHoraInicio)
             .Select(v => new VentaResumenDto(
@@ -32,7 +35,6 @@ public class VentaQueries(SistemaHostalDbContext context) : IVentaQueries
                 v.LineasVenta.Sum(l => l.PrecioUnitario * l.Cantidad), v.Estado.ToString(), v.FechaHoraInicio, v.FechaHoraFinalizacion))
             .ToListAsync(cancellationToken);
     }
-
     public async Task<VentaDetalleDto?> ObtenerDetalleAsync(int ventaId, CancellationToken cancellationToken = default)
     {
         var venta = await context.Set<Venta>()
@@ -45,7 +47,9 @@ public class VentaQueries(SistemaHostalDbContext context) : IVentaQueries
 
         return new VentaDetalleDto(
             venta.Id, venta.NumeroVenta, venta.TurnoId, venta.NumeroHabitacion, venta.TrabajadorId, venta.Observaciones,
-            venta.Total, venta.VueltoEfectivo, venta.Estado.ToString(), venta.FechaHoraInicio, venta.FechaHoraFinalizacion,
+            venta.Total, venta.VueltoEfectivo, venta.Estado.ToString(),
+            venta.MotivoAnulacion, venta.UsuarioAnulacionId, string.Empty, venta.FechaHoraAnulacion,
+            venta.FechaHoraInicio, venta.FechaHoraFinalizacion,
             venta.LineasVenta.Select(l => new LineaVentaDto(l.Id, l.ProductoId, l.NombreProducto, l.PrecioUnitario, l.Cantidad, l.Subtotal)).ToList(),
             venta.PagosVenta.Select(p => new PagoVentaDto(p.Id, p.MetodoDePagoId, p.Monto, p.ReferenciaPago)).ToList());
     }
@@ -75,7 +79,9 @@ public class VentaQueries(SistemaHostalDbContext context) : IVentaQueries
 
         return ventas.Select(venta => new VentaDetalleDto(
             venta.Id, venta.NumeroVenta, venta.TurnoId, venta.NumeroHabitacion, venta.TrabajadorId, venta.Observaciones,
-            venta.Total, venta.VueltoEfectivo, venta.Estado.ToString(), venta.FechaHoraInicio, venta.FechaHoraFinalizacion,
+            venta.Total, venta.VueltoEfectivo, venta.Estado.ToString(),
+            venta.MotivoAnulacion, venta.UsuarioAnulacionId, string.Empty, venta.FechaHoraAnulacion,
+            venta.FechaHoraInicio, venta.FechaHoraFinalizacion,
             venta.LineasVenta.Select(l => new LineaVentaDto(l.Id, l.ProductoId, l.NombreProducto, l.PrecioUnitario, l.Cantidad, l.Subtotal)).ToList(),
             venta.PagosVenta.Select(p => new PagoVentaDto(p.Id, p.MetodoDePagoId, p.Monto, p.ReferenciaPago)).ToList()
         )).ToList();
@@ -108,7 +114,9 @@ public class VentaQueries(SistemaHostalDbContext context) : IVentaQueries
 
         return ventas.Select(venta => new VentaDetalleDto(
             venta.Id, venta.NumeroVenta, venta.TurnoId, venta.NumeroHabitacion, venta.TrabajadorId, venta.Observaciones,
-            venta.Total, venta.VueltoEfectivo, venta.Estado.ToString(), venta.FechaHoraInicio, venta.FechaHoraFinalizacion,
+            venta.Total, venta.VueltoEfectivo, venta.Estado.ToString(),
+            venta.MotivoAnulacion, venta.UsuarioAnulacionId, string.Empty, venta.FechaHoraAnulacion,
+            venta.FechaHoraInicio, venta.FechaHoraFinalizacion,
             venta.LineasVenta.Select(l => new LineaVentaDto(l.Id, l.ProductoId, l.NombreProducto, l.PrecioUnitario, l.Cantidad, l.Subtotal)).ToList(),
             venta.PagosVenta.Select(p => new PagoVentaDto(p.Id, p.MetodoDePagoId, p.Monto, p.ReferenciaPago)).ToList()
         )).ToList();

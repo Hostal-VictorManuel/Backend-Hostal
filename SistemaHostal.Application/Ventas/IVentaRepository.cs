@@ -10,4 +10,6 @@ public interface IVentaRepository : IRepository<Venta>
     Task<Venta?> ObtenerVentaEnProcesoPorTurnoAsync(int turnoId, CancellationToken cancellationToken = default);
     
     Task<IReadOnlyList<Domain.Ventas.Venta>> ObtenerPendientesConTrabajadorAsync(CancellationToken cancellationToken = default);
+    
+    Task<IReadOnlyList<Domain.Ventas.Venta>> ObtenerPendientesPorTrabajadorAsync(int trabajadorId, CancellationToken cancellationToken = default);
 }

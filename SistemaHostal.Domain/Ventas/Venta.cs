@@ -33,6 +33,12 @@ public class Venta : AggregateRoot
     public EstadoVenta Estado { get; private set; }
     public decimal Total => _lineasVenta.Sum(l => l.Subtotal);
     public decimal? VueltoEfectivo { get; private set; }
+    
+    public string? MotivoAnulacion { get; private set; }
+    
+    public int? UsuarioAnulacionId { get; private set; }
+    
+    public DateTime? FechaHoraAnulacion { get; private set; }
     public DateTime FechaHoraInicio { get; private set; }
     public DateTime? FechaHoraFinalizacion { get; private set; }
     public IReadOnlyCollection<LineaVenta> LineasVenta => _lineasVenta.AsReadOnly();
@@ -142,6 +148,25 @@ public class Venta : AggregateRoot
             VueltoEfectivo = montoTotalPagado - Total;
 
         Estado = EstadoVenta.Pagada;
+    }
+    public void Anular(string motivo, int usuarioId)
+    {
+        if (Estado != EstadoVenta.Pagada && Estado != EstadoVenta.Pendiente)
+            throw new InvalidOperationException("Solo se puede anular una venta pagada o pendiente.");
+
+        if (string.IsNullOrWhiteSpace(motivo))
+            throw new ArgumentException("El motivo de anulación es obligatorio.", nameof(motivo));
+
+        Estado = EstadoVenta.Anulada;
+        MotivoAnulacion = motivo;
+        UsuarioAnulacionId = usuarioId;
+        FechaHoraAnulacion = DateTime.UtcNow;
+
+        var lineasParaEvento = _lineasVenta
+            .Select(l => new LineaVentaFinalizada(l.ProductoId, l.Cantidad))
+            .ToList();
+
+        RaiseDomainEvent(new VentaAnulada(Id, usuarioId, motivo, lineasParaEvento));
     }
 
     private void AsegurarEnProceso()

@@ -8,5 +8,6 @@ public enum VentasError
     CantidadInvalida,
     MontoDePagoNoCoincideConTotal,
     VentaSinLineas,
-    StockInsuficiente
+    StockInsuficiente,
+    VentaNoSePuedeAnular
 }

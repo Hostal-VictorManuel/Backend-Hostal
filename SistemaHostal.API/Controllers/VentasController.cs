@@ -91,11 +91,11 @@ public class VentasController(IMediator mediator, IVentaQueries ventaQueries) : 
         return Ok(consumos);
     }
 
-    [HttpGet]
+    [HttpGet] 
     public async Task<IActionResult> Buscar(
-        [FromQuery] DateTime? fecha, [FromQuery] string? numeroVenta, [FromQuery] int? turnoId, CancellationToken cancellationToken)
+        [FromQuery] DateTime? fecha, [FromQuery] string? numeroVenta, [FromQuery] int? turnoId, [FromQuery] string? estado, CancellationToken cancellationToken)
     {
-        var ventas = await ventaQueries.BuscarAsync(fecha, numeroVenta, turnoId, cancellationToken);
+        var ventas = await ventaQueries.BuscarAsync(fecha, numeroVenta, turnoId, estado, cancellationToken);
         return Ok(ventas);
     }
 
@@ -106,8 +106,7 @@ public class VentasController(IMediator mediator, IVentaQueries ventaQueries) : 
         return venta is null ? NotFound() : Ok(venta);
     }
     
-    [HttpGet("trabajadores-con-deuda")]
-    [Authorize(Roles = "Administrador")]
+    [HttpGet("trabajadores-con-deuda")] 
     public async Task<IActionResult> ObtenerTrabajadoresConDeuda(CancellationToken cancellationToken)
     {
         var trabajadores = await ventaQueries.ObtenerTrabajadoresConDeudaAsync(cancellationToken);
@@ -126,5 +125,18 @@ public class VentasController(IMediator mediator, IVentaQueries ventaQueries) : 
     {
         var consumos = await ventaQueries.ObtenerConsumosPorTrabajadorAsync(trabajadorId, cancellationToken);
         return Ok(consumos);
+    }
+    [HttpPatch("trabajadores/{trabajadorId:int}/marcar-pagado")]
+    public async Task<IActionResult> MarcarTrabajadorComoPagado(int trabajadorId, MarcarTrabajadorComoPagadoResource resource, CancellationToken cancellationToken)
+    {
+        var result = await mediator.Send(new MarcarTrabajadorComoPagadoCommand(trabajadorId, resource.MetodoDePagoId), cancellationToken);
+        return result.IsSuccess ? Ok(new { ventasCerradas = result.Value }) : Conflict(new { message = result.Message });
+    }
+    [HttpPatch("{id:int}/anular")]
+    public async Task<IActionResult> Anular(int id, AnularVentaResource resource, CancellationToken cancellationToken)
+    {
+        var usuarioId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub")!);
+        var result = await mediator.Send(new AnularVentaCommand(id, resource.Motivo, usuarioId), cancellationToken);
+        return result.IsSuccess ? Ok(result.Value) : Conflict(new { message = result.Message });
     }
 }

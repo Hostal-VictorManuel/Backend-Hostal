@@ -4,11 +4,12 @@ using SistemaHostal.Domain.Ventas;
 
 namespace SistemaHostal.Application.Ventas;
 
-public class EliminarLineaCommandHandler(
+public class AnularVentaCommandHandler(
     IVentaRepository ventaRepository,
-    IUnitOfWork unitOfWork) : IRequestHandler<EliminarLineaCommand, Result<VentaDetalleDto>>
+    IUnitOfWork unitOfWork,
+    IPublisher publisher) : IRequestHandler<AnularVentaCommand, Result<VentaDetalleDto>>
 {
-    public async Task<Result<VentaDetalleDto>> Handle(EliminarLineaCommand request, CancellationToken cancellationToken)
+    public async Task<Result<VentaDetalleDto>> Handle(AnularVentaCommand request, CancellationToken cancellationToken)
     {
         var venta = await ventaRepository.ObtenerConLineasYPagosAsync(request.VentaId, cancellationToken);
         if (venta is null)
@@ -16,15 +17,20 @@ public class EliminarLineaCommandHandler(
 
         try
         {
-            venta.EliminarLinea(request.LineaVentaId);
+            venta.Anular(request.Motivo, request.UsuarioId);
         }
         catch (InvalidOperationException ex)
         {
-            return Result<VentaDetalleDto>.Failure(VentasError.LineaNoEncontrada, ex.Message);
+            return Result<VentaDetalleDto>.Failure(VentasError.VentaNoSePuedeAnular, ex.Message);
         }
 
         ventaRepository.Update(venta);
         await unitOfWork.SaveChangesAsync(cancellationToken);
+
+        foreach (var domainEvent in venta.DomainEvents)
+            await publisher.Publish(domainEvent, cancellationToken);
+
+        venta.ClearDomainEvents();
 
         return Result<VentaDetalleDto>.Success(MapearDetalle(venta));
     }

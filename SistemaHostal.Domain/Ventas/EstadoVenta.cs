@@ -5,5 +5,6 @@ public enum EstadoVenta
     EnProceso,
     Cancelada,
     Pagada,
-    Pendiente
+    Pendiente,
+    Anulada
 }

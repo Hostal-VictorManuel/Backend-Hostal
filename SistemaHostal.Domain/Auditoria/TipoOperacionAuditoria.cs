@@ -8,5 +8,6 @@ public enum TipoOperacionAuditoria
     Modificacion,
     IngresoInventario,
     AjusteInventario,
-    VentaRegistrada
+    VentaRegistrada,
+    VentaAnulada
 }

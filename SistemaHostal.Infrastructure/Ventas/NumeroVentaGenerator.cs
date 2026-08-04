@@ -9,8 +9,8 @@ public class NumeroVentaGenerator(SistemaHostalDbContext context) : INumeroVenta
 {
     public async Task<string> GenerarAsync(CancellationToken cancellationToken = default)
     {
-        var hoy = DateTime.UtcNow;
-        var prefijo = $"V{hoy:yyyyMMdd}-";
+        var hoyPeru = DateTime.UtcNow.AddHours(-5);
+        var prefijo = $"V{hoyPeru:yyyyMMdd}-";
 
         var ultimoNumeroHoy = await context.Set<Venta>()
             .Where(v => v.NumeroVenta.StartsWith(prefijo))

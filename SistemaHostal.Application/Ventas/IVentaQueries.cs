@@ -3,7 +3,7 @@
 public interface IVentaQueries
 {
     Task<IReadOnlyList<VentaResumenDto>> BuscarAsync(
-        DateTime? fecha, string? numeroVenta, int? turnoId, CancellationToken cancellationToken = default);
+        DateTime? fecha, string? numeroVenta, int? turnoId, string? estado, CancellationToken cancellationToken = default);
 
     Task<VentaDetalleDto?> ObtenerDetalleAsync(int ventaId, CancellationToken cancellationToken = default);
 
@@ -14,4 +14,5 @@ public interface IVentaQueries
     Task<IReadOnlyList<VentaDetalleDto>> ObtenerConsumosPorTrabajadorAsync(int trabajadorId, CancellationToken cancellationToken = default);
     
     Task<IReadOnlyList<VentaDetalleDto>> ObtenerConsumosPorHabitacionAsync(string numeroHabitacion, CancellationToken cancellationToken = default);
+
 }

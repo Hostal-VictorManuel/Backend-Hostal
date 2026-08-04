@@ -31,4 +31,12 @@ public class VentaRepository(SistemaHostalDbContext context) : Repository<Venta>
             .Where(v => v.Estado == EstadoVenta.Pendiente && v.TrabajadorId != null)
             .ToListAsync(cancellationToken);
     }
+    public async Task<IReadOnlyList<Venta>> ObtenerPendientesPorTrabajadorAsync(int trabajadorId, CancellationToken cancellationToken = default)
+    {
+        return await Context.Set<Venta>()
+            .Include(v => v.LineasVenta)
+            .Include(v => v.PagosVenta)
+            .Where(v => v.Estado == EstadoVenta.Pendiente && v.TrabajadorId == trabajadorId)
+            .ToListAsync(cancellationToken);
+    }
 }
