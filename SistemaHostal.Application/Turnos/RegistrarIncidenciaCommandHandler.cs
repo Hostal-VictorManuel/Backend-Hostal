@@ -1,12 +1,16 @@
 ﻿using MediatR;
 using SistemaHostal.Application.Common;
+using SistemaHostal.Domain.Identidad;
 using SistemaHostal.Domain.Turnos;
+using SistemaHostal.Application.Identidad;
 
 namespace SistemaHostal.Application.Turnos;
 
 public class RegistrarIncidenciaCommandHandler(
     ITurnoRepository turnoRepository,
-    IUnitOfWork unitOfWork) : IRequestHandler<RegistrarIncidenciaCommand, Result>
+    IUsuarioRepository usuarioRepository,
+    IUnitOfWork unitOfWork,
+    IPublisher publisher) : IRequestHandler<RegistrarIncidenciaCommand, Result>
 {
     public async Task<Result> Handle(RegistrarIncidenciaCommand request, CancellationToken cancellationToken)
     {
@@ -14,9 +18,12 @@ public class RegistrarIncidenciaCommandHandler(
         if (turno is null)
             return Result.Failure(TurnosError.TurnoNoEncontrado, "Turno no encontrado.");
 
+        var usuario = await usuarioRepository.GetByIdAsync(turno.UsuarioId, cancellationToken);
+        var nombreUsuario = usuario?.NombreCompleto ?? string.Empty;
+
         try
         {
-            turno.RegistrarIncidencia(request.Descripcion);
+            turno.RegistrarIncidencia(request.Descripcion, nombreUsuario);
         }
         catch (InvalidOperationException ex)
         {
@@ -25,6 +32,11 @@ public class RegistrarIncidenciaCommandHandler(
 
         turnoRepository.Update(turno);
         await unitOfWork.SaveChangesAsync(cancellationToken);
+
+        foreach (var domainEvent in turno.DomainEvents)
+            await publisher.Publish(domainEvent, cancellationToken);
+
+        turno.ClearDomainEvents();
 
         return Result.Success();
     }

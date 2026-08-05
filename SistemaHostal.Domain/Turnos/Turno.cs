@@ -32,11 +32,12 @@ public class Turno : AggregateRoot
         FechaHoraFin = DateTime.UtcNow;
     }
 
-    public void RegistrarIncidencia(string descripcion)
+    public void RegistrarIncidencia(string descripcion, string nombreUsuario)
     {
         if (Estado == EstadoTurno.Finalizado)
             throw new InvalidOperationException("No se pueden registrar incidencias en un turno finalizado.");
 
         _incidencias.Add(new Incidencia(descripcion));
+        RaiseDomainEvent(new IncidenciaRegistrada(Id, UsuarioId, nombreUsuario, descripcion));
     }
 }
