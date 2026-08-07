@@ -4,6 +4,7 @@ using SistemaHostal.Domain.Trabajadores;
 using SistemaHostal.Domain.Ventas;
 using SistemaHostal.Infrastructure.Persistence;
 using SistemaHostal.Domain.Pagos;
+using SistemaHostal.Domain.Identidad;
 
 namespace SistemaHostal.Infrastructure.Ventas;
 
@@ -57,11 +58,22 @@ public class VentaQueries(SistemaHostalDbContext context) : IVentaQueries
 
         if (venta is null) return null;
 
+        var idsUsuarios = new[] { venta.UsuarioAnulacionId, venta.UsuarioTransferenciaId }
+            .Where(id => id.HasValue).Select(id => id!.Value).Distinct().ToList();
+
+        var nombresUsuarios = await context.Set<Usuario>().AsNoTracking()
+            .Where(u => idsUsuarios.Contains(u.Id))
+            .ToDictionaryAsync(u => u.Id, u => u.NombreCompleto, cancellationToken);
+
         return new VentaDetalleDto(
             venta.Id, venta.NumeroVenta, venta.TurnoId, venta.NumeroHabitacion, venta.TrabajadorId, venta.Observaciones,
             venta.Total, venta.VueltoEfectivo, venta.Estado.ToString(),
-            venta.MotivoAnulacion, venta.UsuarioAnulacionId, string.Empty, venta.FechaHoraAnulacion,
-            venta.HabitacionAnterior, venta.MotivoTransferencia, venta.UsuarioTransferenciaId, string.Empty, venta.FechaHoraTransferencia,
+            venta.MotivoAnulacion, venta.UsuarioAnulacionId,
+            venta.UsuarioAnulacionId.HasValue ? nombresUsuarios.GetValueOrDefault(venta.UsuarioAnulacionId.Value, string.Empty) : null,
+            venta.FechaHoraAnulacion,
+            venta.HabitacionAnterior, venta.MotivoTransferencia, venta.UsuarioTransferenciaId,
+            venta.UsuarioTransferenciaId.HasValue ? nombresUsuarios.GetValueOrDefault(venta.UsuarioTransferenciaId.Value, string.Empty) : null,
+            venta.FechaHoraTransferencia,
             venta.FechaHoraInicio, venta.FechaHoraFinalizacion,
             venta.LineasVenta.Select(l => new LineaVentaDto(l.Id, l.ProductoId, l.NombreProducto, l.PrecioUnitario, l.Cantidad, l.Subtotal)).ToList(),
             venta.PagosVenta.Select(p => new PagoVentaDto(p.Id, p.MetodoDePagoId, p.Monto, p.ReferenciaPago)).ToList());

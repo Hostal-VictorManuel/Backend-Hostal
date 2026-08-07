@@ -1,11 +1,13 @@
 ﻿using MediatR;
 using SistemaHostal.Application.Common;
+using SistemaHostal.Application.Identidad;
 using SistemaHostal.Domain.Ventas;
 
 namespace SistemaHostal.Application.Ventas;
 
 public class AnularVentaCommandHandler(
     IVentaRepository ventaRepository,
+    IUsuarioRepository usuarioRepository,
     IUnitOfWork unitOfWork,
     IPublisher publisher) : IRequestHandler<AnularVentaCommand, Result<VentaDetalleDto>>
 {
@@ -29,16 +31,18 @@ public class AnularVentaCommandHandler(
 
         foreach (var domainEvent in venta.DomainEvents)
             await publisher.Publish(domainEvent, cancellationToken);
-
         venta.ClearDomainEvents();
 
-        return Result<VentaDetalleDto>.Success(MapearDetalle(venta));
+        var usuario = await usuarioRepository.GetByIdAsync(request.UsuarioId, cancellationToken);
+        var dto = MapearDetalle(venta, usuario?.NombreCompleto ?? string.Empty);
+
+        return Result<VentaDetalleDto>.Success(dto);
     }
 
-    private static VentaDetalleDto MapearDetalle(Domain.Ventas.Venta venta) => new(
+    private static VentaDetalleDto MapearDetalle(Domain.Ventas.Venta venta, string nombreUsuarioAnulacion) => new(
         venta.Id, venta.NumeroVenta, venta.TurnoId, venta.NumeroHabitacion, venta.TrabajadorId, venta.Observaciones,
         venta.Total, venta.VueltoEfectivo, venta.Estado.ToString(),
-        venta.MotivoAnulacion, venta.UsuarioAnulacionId, string.Empty, venta.FechaHoraAnulacion,
+        venta.MotivoAnulacion, venta.UsuarioAnulacionId, nombreUsuarioAnulacion, venta.FechaHoraAnulacion,
         venta.HabitacionAnterior, venta.MotivoTransferencia, venta.UsuarioTransferenciaId, string.Empty, venta.FechaHoraTransferencia,
         venta.FechaHoraInicio, venta.FechaHoraFinalizacion,
         venta.LineasVenta.Select(l => new LineaVentaDto(l.Id, l.ProductoId, l.NombreProducto, l.PrecioUnitario, l.Cantidad, l.Subtotal)).ToList(),
