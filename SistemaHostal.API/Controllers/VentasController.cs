@@ -139,4 +139,12 @@ public class VentasController(IMediator mediator, IVentaQueries ventaQueries) : 
         var result = await mediator.Send(new AnularVentaCommand(id, resource.Motivo, usuarioId), cancellationToken);
         return result.IsSuccess ? Ok(result.Value) : Conflict(new { message = result.Message });
     }
+    [HttpPatch("{id:int}/transferir-habitacion")]
+    public async Task<IActionResult> TransferirHabitacion(int id, TransferirHabitacionResource resource, CancellationToken cancellationToken)
+    {
+        var usuarioId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub")!);
+        var command = new TransferirHabitacionCommand(id, resource.NumeroHabitacionNueva, resource.Motivo, usuarioId);
+        var result = await mediator.Send(command, cancellationToken);
+        return result.IsSuccess ? Ok(result.Value) : Conflict(new { message = result.Message });
+    }
 }

@@ -18,8 +18,8 @@ public class IniciarVentaCommandHandler(
         await unitOfWork.SaveChangesAsync(cancellationToken);
 
         var dto = new VentaResumenDto(venta.Id, venta.NumeroVenta, venta.TurnoId, venta.NumeroHabitacion, 
-            venta.TrabajadorId, venta.Total, venta.Estado.ToString(), 
-            venta.FechaHoraInicio, venta.FechaHoraFinalizacion);
+            venta.TrabajadorId, venta.Total, venta.Estado.ToString(),
+            venta.FechaHoraInicio, venta.FechaHoraFinalizacion, new List<PagoResumenDto>());
         return Result<VentaResumenDto>.Success(dto);
     }
 }

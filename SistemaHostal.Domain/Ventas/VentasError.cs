@@ -9,5 +9,6 @@ public enum VentasError
     MontoDePagoNoCoincideConTotal,
     VentaSinLineas,
     StockInsuficiente,
-    VentaNoSePuedeAnular
+    VentaNoSePuedeAnular,
+    VentaNoSePuedeTransferir
 }

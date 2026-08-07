@@ -39,6 +39,11 @@ public class Venta : AggregateRoot
     public int? UsuarioAnulacionId { get; private set; }
     
     public DateTime? FechaHoraAnulacion { get; private set; }
+    public string? HabitacionAnterior { get; private set; }
+    public string? MotivoTransferencia { get; private set; }
+    public int? UsuarioTransferenciaId { get; private set; }
+    public DateTime? FechaHoraTransferencia { get; private set; }
+    
     public DateTime FechaHoraInicio { get; private set; }
     public DateTime? FechaHoraFinalizacion { get; private set; }
     public IReadOnlyCollection<LineaVenta> LineasVenta => _lineasVenta.AsReadOnly();
@@ -161,12 +166,35 @@ public class Venta : AggregateRoot
         MotivoAnulacion = motivo;
         UsuarioAnulacionId = usuarioId;
         FechaHoraAnulacion = DateTime.UtcNow;
+        
 
         var lineasParaEvento = _lineasVenta
             .Select(l => new LineaVentaFinalizada(l.ProductoId, l.Cantidad))
             .ToList();
 
         RaiseDomainEvent(new VentaAnulada(Id, usuarioId, motivo, lineasParaEvento));
+    }
+    
+    public void TransferirHabitacion(string numeroHabitacionNueva, string motivo, int usuarioId)
+    {
+        if (Estado != EstadoVenta.Pendiente || NumeroHabitacion is null)
+            throw new InvalidOperationException("Solo se puede transferir una venta pendiente cargada a una habitación.");
+
+        if (string.IsNullOrWhiteSpace(numeroHabitacionNueva))
+            throw new ArgumentException("El número de habitación nueva es obligatorio.", nameof(numeroHabitacionNueva));
+
+        if (string.IsNullOrWhiteSpace(motivo))
+            throw new ArgumentException("El motivo de la transferencia es obligatorio.", nameof(motivo));
+
+        var habitacionAnterior = NumeroHabitacion;
+
+        HabitacionAnterior = habitacionAnterior;
+        NumeroHabitacion = numeroHabitacionNueva;
+        MotivoTransferencia = motivo;
+        UsuarioTransferenciaId = usuarioId;
+        FechaHoraTransferencia = DateTime.UtcNow;
+
+        RaiseDomainEvent(new VentaTransferida(Id, usuarioId, habitacionAnterior, numeroHabitacionNueva, motivo));
     }
 
     private void AsegurarEnProceso()

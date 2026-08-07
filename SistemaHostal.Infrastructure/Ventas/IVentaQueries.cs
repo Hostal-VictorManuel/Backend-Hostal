@@ -3,6 +3,7 @@ using SistemaHostal.Application.Ventas;
 using SistemaHostal.Domain.Trabajadores;
 using SistemaHostal.Domain.Ventas;
 using SistemaHostal.Infrastructure.Persistence;
+using SistemaHostal.Domain.Pagos;
 
 namespace SistemaHostal.Infrastructure.Ventas;
 
@@ -28,12 +29,23 @@ public class VentaQueries(SistemaHostalDbContext context) : IVentaQueries
         if (!string.IsNullOrWhiteSpace(estado) && Enum.TryParse<EstadoVenta>(estado, out var estadoEnum))
             query = query.Where(v => v.Estado == estadoEnum);
 
-        return await query
+        var ventas = await query
             .OrderByDescending(v => v.FechaHoraInicio)
-            .Select(v => new VentaResumenDto(
-                v.Id, v.NumeroVenta, v.TurnoId, v.NumeroHabitacion, v.TrabajadorId,
-                v.LineasVenta.Sum(l => l.PrecioUnitario * l.Cantidad), v.Estado.ToString(), v.FechaHoraInicio, v.FechaHoraFinalizacion))
+            .Select(v => new
+            {
+                v.Id, v.NumeroVenta, v.TurnoId, v.NumeroHabitacion, v.TrabajadorId, v.Estado, v.FechaHoraInicio, v.FechaHoraFinalizacion,
+                Total = v.LineasVenta.Sum(l => l.PrecioUnitario * l.Cantidad),
+                Pagos = v.PagosVenta.Select(p => new { p.MetodoDePagoId, p.Monto }).ToList()
+            })
             .ToListAsync(cancellationToken);
+
+        var metodosDePago = await context.Set<MetodoDePago>().AsNoTracking()
+            .ToDictionaryAsync(m => m.Id, m => m.Nombre, cancellationToken);
+
+        return ventas.Select(v => new VentaResumenDto(
+            v.Id, v.NumeroVenta, v.TurnoId, v.NumeroHabitacion, v.TrabajadorId, v.Total, v.Estado.ToString(), v.FechaHoraInicio, v.FechaHoraFinalizacion,
+            v.Pagos.Select(p => new PagoResumenDto(metodosDePago.GetValueOrDefault(p.MetodoDePagoId, string.Empty), p.Monto)).ToList()
+        )).ToList();
     }
     public async Task<VentaDetalleDto?> ObtenerDetalleAsync(int ventaId, CancellationToken cancellationToken = default)
     {
@@ -49,6 +61,7 @@ public class VentaQueries(SistemaHostalDbContext context) : IVentaQueries
             venta.Id, venta.NumeroVenta, venta.TurnoId, venta.NumeroHabitacion, venta.TrabajadorId, venta.Observaciones,
             venta.Total, venta.VueltoEfectivo, venta.Estado.ToString(),
             venta.MotivoAnulacion, venta.UsuarioAnulacionId, string.Empty, venta.FechaHoraAnulacion,
+            venta.HabitacionAnterior, venta.MotivoTransferencia, venta.UsuarioTransferenciaId, string.Empty, venta.FechaHoraTransferencia,
             venta.FechaHoraInicio, venta.FechaHoraFinalizacion,
             venta.LineasVenta.Select(l => new LineaVentaDto(l.Id, l.ProductoId, l.NombreProducto, l.PrecioUnitario, l.Cantidad, l.Subtotal)).ToList(),
             venta.PagosVenta.Select(p => new PagoVentaDto(p.Id, p.MetodoDePagoId, p.Monto, p.ReferenciaPago)).ToList());
@@ -81,6 +94,7 @@ public class VentaQueries(SistemaHostalDbContext context) : IVentaQueries
             venta.Id, venta.NumeroVenta, venta.TurnoId, venta.NumeroHabitacion, venta.TrabajadorId, venta.Observaciones,
             venta.Total, venta.VueltoEfectivo, venta.Estado.ToString(),
             venta.MotivoAnulacion, venta.UsuarioAnulacionId, string.Empty, venta.FechaHoraAnulacion,
+            venta.HabitacionAnterior, venta.MotivoTransferencia, venta.UsuarioTransferenciaId, string.Empty, venta.FechaHoraTransferencia,
             venta.FechaHoraInicio, venta.FechaHoraFinalizacion,
             venta.LineasVenta.Select(l => new LineaVentaDto(l.Id, l.ProductoId, l.NombreProducto, l.PrecioUnitario, l.Cantidad, l.Subtotal)).ToList(),
             venta.PagosVenta.Select(p => new PagoVentaDto(p.Id, p.MetodoDePagoId, p.Monto, p.ReferenciaPago)).ToList()
@@ -116,6 +130,7 @@ public class VentaQueries(SistemaHostalDbContext context) : IVentaQueries
             venta.Id, venta.NumeroVenta, venta.TurnoId, venta.NumeroHabitacion, venta.TrabajadorId, venta.Observaciones,
             venta.Total, venta.VueltoEfectivo, venta.Estado.ToString(),
             venta.MotivoAnulacion, venta.UsuarioAnulacionId, string.Empty, venta.FechaHoraAnulacion,
+            venta.HabitacionAnterior, venta.MotivoTransferencia, venta.UsuarioTransferenciaId, string.Empty, venta.FechaHoraTransferencia,
             venta.FechaHoraInicio, venta.FechaHoraFinalizacion,
             venta.LineasVenta.Select(l => new LineaVentaDto(l.Id, l.ProductoId, l.NombreProducto, l.PrecioUnitario, l.Cantidad, l.Subtotal)).ToList(),
             venta.PagosVenta.Select(p => new PagoVentaDto(p.Id, p.MetodoDePagoId, p.Monto, p.ReferenciaPago)).ToList()

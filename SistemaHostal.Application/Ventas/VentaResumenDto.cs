@@ -9,4 +9,5 @@ public record VentaResumenDto(
     decimal Total,
     string Estado,
     DateTime FechaHoraInicio,
-    DateTime? FechaHoraFinalizacion);
+    DateTime? FechaHoraFinalizacion,
+    IReadOnlyList<PagoResumenDto> Pagos);

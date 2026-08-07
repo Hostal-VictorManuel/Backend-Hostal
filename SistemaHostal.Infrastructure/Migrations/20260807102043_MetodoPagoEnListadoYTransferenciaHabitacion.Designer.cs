@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using SistemaHostal.Infrastructure.Persistence;
@@ -11,9 +12,11 @@ using SistemaHostal.Infrastructure.Persistence;
 namespace SistemaHostal.Infrastructure.Migrations
 {
     [DbContext(typeof(SistemaHostalDbContext))]
-    partial class SistemaHostalDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260807102043_MetodoPagoEnListadoYTransferenciaHabitacion")]
+    partial class MetodoPagoEnListadoYTransferenciaHabitacion
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
